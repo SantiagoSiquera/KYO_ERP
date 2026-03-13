@@ -3,9 +3,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 def normalizar_numero(valor):
     """
-    Convierte formato latino a Decimal.
-
-    1.234,50 -> Decimal('1234.50')
+    Convierte número en formato latino o decimal a Decimal seguro.
     """
 
     if valor is None:
@@ -16,7 +14,11 @@ def normalizar_numero(valor):
     if valor == "":
         return Decimal("0.00")
 
-    valor = valor.replace(".", "").replace(",", ".")
+    # formato latino
+    if "," in valor:
+        valor = valor.replace(".", "").replace(",", ".")
+    else:
+        valor = valor.replace(" ", "")
 
     try:
         numero = Decimal(valor).quantize(

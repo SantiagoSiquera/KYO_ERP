@@ -126,7 +126,7 @@ if(partes.length > 2){
 valor = partes.slice(0,-1).join("") + "." + partes.slice(-1)
 }
 
-let numero = Number(valor)
+let numero = numeroReal(valor)
 
 if(!isNaN(numero)){
 
@@ -268,6 +268,21 @@ if(!form.action.includes("/movimientos/nuevo/")) return
 
 e.preventDefault()
 
+
+/* NORMALIZAR DINERO ANTES DE ENVIAR */
+
+const montoInput = document.getElementById("montoMovimiento")
+
+if(montoInput){
+  let n = numeroReal(montoInput.dataset.valor || montoInput.value)
+  montoInput.value = n.toFixed(2)
+}
+
+document.querySelectorAll("#rubrosBody input[name='importe[]']").forEach(i=>{
+  let n = numeroReal(i.dataset.valor || i.value)
+  i.value = n.toFixed(2)
+})
+
 let data = new FormData(form)
 
 fetch(form.action,{
@@ -287,7 +302,7 @@ const json = JSON.parse(texto)
 
 if(!r.ok){
 
-console.error("Error Django:", json)
+console.error("Error Django:", JSON.stringify(json, null, 2))
 alert("Error al guardar. Revisa consola.")
 return null
 
