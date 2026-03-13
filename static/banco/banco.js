@@ -381,18 +381,58 @@ tabla.prepend(fila)
 
 function marcarFila(check){
 
-const fila = check.closest("tr")
+    const fila = check.closest("tr")
+    if(!fila) return
 
-if(!fila) return
-
-if(check.checked){
-
-fila.style.backgroundColor = "#fff8dc"   // color papel suave
-
-}else{
-
-fila.style.backgroundColor = ""
+    fila.classList.toggle("fila-conciliada", check.checked)
 
 }
+
+function ordenarTabla(col){
+
+const tabla = document.getElementById("tablaMovimientos")
+const tbody = tabla.querySelector("tbody")
+
+const filas = Array.from(tbody.querySelectorAll("tr"))
+
+let asc = tabla.dataset.orden !== "asc"
+
+filas.sort(function(a,b){
+
+let A = a.children[col].innerText.trim()
+let B = b.children[col].innerText.trim()
+
+/* detectar fecha */
+
+if(A.match(/\d{2}\/\d{2}\/\d{4}/)){
+
+let pa = A.split("/")
+let pb = B.split("/")
+
+let da = new Date(pa[2], pa[1]-1, pa[0])
+let db = new Date(pb[2], pb[1]-1, pb[0])
+
+return asc ? da-db : db-da
+}
+
+/* detectar numero con miles */
+
+let numA = parseFloat(A.replace(/\./g,"").replace(",","."))
+let numB = parseFloat(B.replace(/\./g,"").replace(",","."))
+if(!isNaN(numA) && !isNaN(numB)){
+return asc ? numA-numB : numB-numA
+}
+
+/* texto */
+
+return asc
+? A.localeCompare(B)
+: B.localeCompare(A)
+
+})
+
+filas.forEach(f => tbody.appendChild(f))
+
+tabla.dataset.orden = asc ? "asc" : "desc"
 
 }
