@@ -114,33 +114,22 @@ FORMATO MONTO
 
 document.addEventListener("blur", function(e){
 
-if(e.target.id !== "montoMovimiento" && e.target.name !== "importe[]") return
+  if(e.target.id !== "montoMovimiento" && e.target.name !== "importe[]") return
 
-let valor = e.target.value.trim()
-if(valor === "") return
+  let valor = e.target.value.trim()
+  if(valor === "") return
 
-valor = valor.replace(",", ".")
+  let numero = numeroReal(valor)
 
-let partes = valor.split(".")
-if(partes.length > 2){
-valor = partes.slice(0,-1).join("") + "." + partes.slice(-1)
-}
+  e.target.dataset.valor = numero
 
-let numero = numeroReal(valor)
-
-if(!isNaN(numero)){
-
-e.target.dataset.valor = numero
-
-e.target.value = numero.toLocaleString("es-UY",{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-})
-
-}
+  e.target.value = numero.toLocaleString("es-UY",{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  })
+  calcularRubros()
 
 }, true)
-
 /* ================================
 CONVERTIR A NÚMERO REAL
 ================================ */
@@ -261,6 +250,7 @@ GUARDAR MOVIMIENTO (AJAX)
 ================================ */
 
 document.addEventListener("submit", function(e){
+    if(e.defaultPrevented) return
 
 const form = e.target
 
@@ -328,6 +318,10 @@ mostrarToast("Movimiento guardado")
 insertarMovimientoTabla(res.movimiento)
 
 form.reset()
+const montoInput = document.getElementById("montoMovimiento")
+if(montoInput){
+    delete montoInput.dataset.valor
+}
 
 document.getElementById("rubrosBody").innerHTML=""
 
@@ -377,16 +371,31 @@ fila.innerHTML = `
 <td>${m.fecha}</td>
 <td>${m.cuenta}</td>
 <td>${m.descripcion}</td>
-<td>${m.monto.toLocaleString("es-UY",{minimumFractionDigits:2})}</td>
+
+<td class="col-monto">
+${Number(m.monto).toLocaleString("es-UY",{minimumFractionDigits:2})}
+</td>
+
 <td>
-<select class="form-select form-select-sm">
+<select class="form-select form-select-sm estado-select">
 <option ${m.estado=="Pendiente"?"selected":""}>Pendiente</option>
 <option ${m.estado=="Acreditado"?"selected":""}>Acreditado</option>
 </select>
 </td>
+
 <td>
-<button class="btn btn-sm btn-primary">Editar</button>
-<button class="btn btn-sm btn-danger">Eliminar</button>
+<input
+type="checkbox"
+class="check-mov"
+onclick="marcarFila(this)"
+>
+</td>
+
+<td>
+<div class="acciones-box">
+<button class="btn-editar">Editar</button>
+<button class="btn-eliminar">Eliminar</button>
+</div>
 </td>
 `
 

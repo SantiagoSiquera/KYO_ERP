@@ -1,6 +1,7 @@
 
 from django import forms
 from .models import Movimiento
+from utils.dinero import normalizar_numero
 
 
 class MovimientoForm(forms.ModelForm):
@@ -67,24 +68,14 @@ class MovimientoForm(forms.ModelForm):
         self.fields["moneda"].required = False
 
 
-    def clean_monto(self):
+        def clean_monto(self):
 
-        valor = self.data.get("monto")
+            valor = self.data.get("monto")
 
-        if not valor:
-            return valor
+            if not valor:
+                return valor
 
-        valor = valor.strip()
-
-             # convertir separadores
-        valor = valor.replace(",", ".")
-
-         # eliminar separador de miles
-        partes = valor.split(".")
-        if len(partes) > 2:
-            valor = "".join(partes[:-1]) + "." + partes[-1]
-
-        try:
-            return float(valor)
-        except:
-            raise forms.ValidationError("Monto inválido")
+            try:
+             return normalizar_numero(valor)
+            except:
+             raise forms.ValidationError("Monto inválido")

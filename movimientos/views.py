@@ -80,7 +80,7 @@ def crear_movimiento(request):
                         movimiento=movimiento,
                         rubro=rubro,
                         proveedor=proveedor,
-                        importe=importe
+                        monto=importe
                     )
 
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
