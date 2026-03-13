@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<h2 class="fw-semibold">Dashboard</h2>
+
+</div>
+
+<div class="row g-4">
+
+<!-- BANCO -->
+
+<div class="col-lg-4">
+
+<div class="card">
+
+<div class="card-body">
+
+<div class="d-flex align-items-center mb-2">
+
+<i class="bi bi-bank fs-3 text-primary me-2"></i>
+
+<h5 class="mb-0">Banco</h5>
+
+</div>
+
+<p class="text-muted">
+Movimientos y conciliación bancaria
+</p>
+
+<a href="/banco" class="btn btn-primary btn-sm">
+Entrar
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- PRESUPUESTOS -->
+
+<div class="col-lg-4">
+
+<div class="card">
+
+<div class="card-body">
+
+<div class="d-flex align-items-center mb-2">
+
+<i class="bi bi-file-earmark-text fs-3 text-success me-2"></i>
+
+<h5 class="mb-0">Presupuestos</h5>
+
+</div>
+
+<p class="text-muted">
+Gestión de presupuestos de ventas
+</p>
+
+<button class="btn btn-secondary btn-sm">
+Próximamente
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- VENTAS -->
+
+<div class="col-lg-4">
+
+<div class="card">
+
+<div class="card-body">
+
+<div class="d-flex align-items-center mb-2">
+
+<i class="bi bi-cart fs-3 text-warning me-2"></i>
+
+<h5 class="mb-0">Ventas</h5>
+
+</div>
+
+<p class="text-muted">
+Pedidos y gestión comercial
+</p>
+
+<button class="btn btn-secondary btn-sm">
+Próximamente
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<hr class="my-5">
+
+
+<!-- AREA FUTURA DE MÉTRICAS -->
+
+<div class="row g-4">
+
+<div class="col-lg-3">
+
+<div class="card">
+
+<div class="card-body">
+
+<h6 class="text-muted">Saldo bancos</h6>
+
+<h4 class="fw-bold">$0</h4>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-lg-3">
+
+<div class="card">
+
+<div class="card-body">
+
+<h6 class="text-muted">Ingresos del mes</h6>
+
+<h4 class="fw-bold text-success">$0</h4>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-lg-3">
+
+<div class="card">
+
+<div class="card-body">
+
+<h6 class="text-muted">Egresos del mes</h6>
+
+<h4 class="fw-bold text-danger">$0</h4>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-lg-3">
+
+<div class="card">
+
+<div class="card-body">
+
+<h6 class="text-muted">Resultado</h6>
+
+<h4 class="fw-bold text-primary">$0</h4>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

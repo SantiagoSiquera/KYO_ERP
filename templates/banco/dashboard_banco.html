@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2 class="mb-4">Banco</h2>
+
+<div class="row g-4">
+
+{% for cuenta in cuentas %}
+
+<div class="col-lg-4 col-md-6">
+
+<div class="card h-100 shadow-sm cuenta-card"
+onclick="window.location='/movimientos/conciliacion/?cuenta={{ cuenta.id }}'">
+
+<div class="card-body">
+
+<h5 class="mb-1">{{ cuenta.nombre }}</h5>
+
+<p class="text-muted mb-3">{{ cuenta.moneda }}</p>
+
+<hr>
+
+<div class="mb-2">
+<b>Saldo actual</b><br>
+<span class="fs-5 fw-semibold">
+{{ cuenta.saldo }}
+</span>
+</div>
+
+<div class="mb-1 text-success">
+Entradas mes: {{ cuenta.entradas }}
+</div>
+
+<div class="mb-3 text-danger">
+Salidas mes: {{ cuenta.salidas }}
+</div>
+
+<div>
+<button class="btn btn-primary btn-sm">
+<i class="bi bi-arrow-left-right"></i> Conciliar
+</button>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}
