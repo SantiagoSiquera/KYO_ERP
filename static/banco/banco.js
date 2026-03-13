@@ -50,7 +50,7 @@ const fila = document.createElement("tr")
 
 fila.innerHTML = `
 <td>
-<select name="rubro[]" class="form-select">
+<select name="rubro[]" class="form-select rubro-select">
 <option value="">Seleccione rubro</option>
 ${rubrosOptions}
 </select>
@@ -117,13 +117,11 @@ document.addEventListener("blur", function(e){
 if(e.target.id !== "montoMovimiento" && e.target.name !== "importe[]") return
 
 let valor = e.target.value.trim()
-
 if(valor === "") return
 
 valor = valor.replace(",", ".")
 
 let partes = valor.split(".")
-
 if(partes.length > 2){
 valor = partes.slice(0,-1).join("") + "." + partes.slice(-1)
 }
@@ -143,22 +141,29 @@ maximumFractionDigits:2
 
 }, true)
 
-
 /* ================================
 CONVERTIR A NÚMERO REAL
 ================================ */
 
 function numeroReal(valor){
 
-if(!valor) return 0
+    if(valor === null || valor === undefined) return 0
 
-valor = String(valor).trim()
+    valor = String(valor).trim()
 
-valor = valor.replace(/\./g,"").replace(",", ".")
+    if(valor === "") return 0
 
-let n = Number(valor)
+    // formato latino: 1.234,56
+    if(valor.includes(",")){
+        valor = valor.replace(/\./g,"").replace(",",".")
+    }
 
-return isNaN(n) ? 0 : n
+    const numero = Number(valor)
+
+    if(isNaN(numero)) return 0
+
+    // redondeo a 2 decimales igual que Decimal.quantize
+    return Math.round(numero * 100) / 100
 
 }
 
@@ -173,8 +178,7 @@ let total = 0
 
 document.querySelectorAll("input[name='importe[]']").forEach(i=>{
 
-let valor = i.value
-
+let valor = i.dataset.valor || i.value
 total += numeroReal(valor)
 
 })
@@ -184,11 +188,8 @@ let montoInput = document.getElementById("montoMovimiento")
 let monto = 0
 
 if(montoInput){
-
-let v = montoInput.value
-
+let v = montoInput.dataset.valor || montoInput.value
 monto = numeroReal(v)
-
 }
 
 let diferencia = monto - total
@@ -436,3 +437,28 @@ filas.forEach(f => tbody.appendChild(f))
 tabla.dataset.orden = asc ? "asc" : "desc"
 
 }
+
+/* ================================
+HABILITAR PROVEEDOR SEGUN RUBRO
+================================ */
+
+document.addEventListener("change", function(e){
+
+    if(!e.target.classList.contains("rubro-select")) return;
+
+    const fila = e.target.closest("tr");
+    if(!fila) return;
+
+    const proveedor = fila.querySelector(".proveedor-select");
+    if(!proveedor) return;
+
+    const texto = e.target.options[e.target.selectedIndex].text.toLowerCase();
+
+    if(texto.includes("proveedor")){
+        proveedor.disabled = false;
+    }else{
+        proveedor.disabled = true;
+        proveedor.value = "";
+    }
+
+});
