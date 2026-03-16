@@ -49,7 +49,7 @@ def crear_movimiento(request):
 
             tipo = data.get("tipo_movimiento")
 
-            if tipo == "EGRESO":
+            if tipo == "egreso":
                 monto_movimiento = -abs(monto_movimiento)
             else:
                 monto_movimiento = abs(monto_movimiento)
