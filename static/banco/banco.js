@@ -492,3 +492,54 @@ document.addEventListener("change", function(e){
     }
 
 });
+
+/* ================================
+Actualiza saldo al cambio de estado
+================================ */
+
+function cambiarEstado(select){
+
+const movimientoId = select.dataset.movimientoId
+const estado = select.value
+
+fetch(`/movimientos/cambiar-estado/${movimientoId}/`,{
+method:"POST",
+headers:{
+"Content-Type":"application/x-www-form-urlencoded",
+"X-CSRFToken":getCookie("csrftoken")
+},
+body:`estado=${estado}`
+})
+.then(()=>{
+
+actualizarTarjetas()
+
+})
+
+}
+
+function actualizarTarjetas(){
+
+const cuenta = new URLSearchParams(window.location.search).get("cuenta")
+const mes = new URLSearchParams(window.location.search).get("mes")
+const anio = new URLSearchParams(window.location.search).get("anio")
+
+fetch(`/movimientos/resumen/?cuenta=${cuenta}&mes=${mes}&anio=${anio}`)
+.then(r => r.json())
+.then(data => {
+
+document.getElementById("saldoInicial").innerText =
+data.saldo_inicial.toLocaleString("es-UY",{minimumFractionDigits:2})
+
+document.getElementById("ingresosMes").innerText =
+data.ingresos.toLocaleString("es-UY",{minimumFractionDigits:2})
+
+document.getElementById("egresosMes").innerText =
+data.egresos.toLocaleString("es-UY",{minimumFractionDigits:2})
+
+document.getElementById("saldoActual").innerText =
+data.saldo_actual.toLocaleString("es-UY",{minimumFractionDigits:2})
+
+})
+
+}

@@ -41,7 +41,7 @@ href="?cuenta={{ cuenta.id }}&anio={{ anio }}&mes={{ mes|add:1 }}">▶</a>
 <div class="card shadow-sm">
 <div class="card-body">
 <div class="text-muted small">Saldo inicial</div>
-<h4 class="mb-0">{{ saldo_inicial|floatformat:2|intcomma }}</h4>
+<h4 id="saldoInicial" class="mb-0">{{ saldo_inicial|floatformat:2|intcomma }}</h4>
 </div>
 </div>
 </div>
@@ -50,7 +50,7 @@ href="?cuenta={{ cuenta.id }}&anio={{ anio }}&mes={{ mes|add:1 }}">▶</a>
 <div class="card shadow-sm">
 <div class="card-body">
 <div class="text-success small">Ingresos mes</div>
-<h4 class="mb-0 text-success">{{ ingresos|floatformat:2|intcomma }}</h4>
+<h4 id= "ingresosMes" class="mb-0 text-success">{{ ingresos|floatformat:2|intcomma }}</h4>
 </div>
 </div>
 </div>
@@ -59,7 +59,7 @@ href="?cuenta={{ cuenta.id }}&anio={{ anio }}&mes={{ mes|add:1 }}">▶</a>
 <div class="card shadow-sm">
 <div class="card-body">
 <div class="text-danger small">Egresos mes</div>
-<h4 class="mb-0 text-danger">{{ egresos|floatformat:2|intcomma }}</h4>
+<h4 id= "egresosMes" class="mb-0 text-danger">{{ egresos|floatformat:2|intcomma }}</h4>
 </div>
 </div>
 </div>
@@ -68,7 +68,7 @@ href="?cuenta={{ cuenta.id }}&anio={{ anio }}&mes={{ mes|add:1 }}">▶</a>
 <div class="card shadow-sm">
 <div class="card-body">
 <div class="text-primary small">Saldo actual</div>
-<h4 class="mb-0 text-primary">{{ saldo_actual|floatformat:2|intcomma }}</h4>
+<h4 id= "saldoActual" class="mb-0 text-primary">{{ saldo_actual|floatformat:2|intcomma }}</h4>
 </div>
 </div>
 </div>
@@ -134,9 +134,22 @@ href="?cuenta={{ cuenta.id }}&anio={{ anio }}&mes={{ mes|add:1 }}">▶</a>
 
 <td>
 
-<select class="form-select form-select-sm estado-select">
-<option {% if m.estado == "ACREDITADO" %}selected{% endif %}>Acreditado</option>
-<option {% if m.estado == "PENDIENTE" %}selected{% endif %}>Pendiente</option>
+<select
+class="form-select form-select-sm estado-select"
+data-movimiento-id="{{ m.id }}"
+onchange="cambiarEstado(this)"
+>
+
+<option value="ACREDITADO"
+{% if m.estado == "ACREDITADO" %}selected{% endif %}>
+Acreditado
+</option>
+
+<option value="PENDIENTE"
+{% if m.estado == "PENDIENTE" %}selected{% endif %}>
+Pendiente
+</option>
+
 </select>
 
 </td>

@@ -4,14 +4,15 @@ from django.db.models import Sum
 from django.db import transaction
 from datetime import date
 from django.utils.formats import date_format
-
+from finanzas.models import SaldoCuentaMensual
 from .models import Movimiento
 from cuentas.models import Cuenta
 from .forms import MovimientoForm
 from rubros.models import Rubro, MovimientoRubro
 from proveedores.models import Proveedor
 from django.http import JsonResponse
-
+from django.http import JsonResponse
+from finanzas.models import SaldoCuentaMensual
 from utils.dinero import normalizar_numero, sumar, son_iguales
 
 
@@ -156,17 +157,62 @@ def conciliacion(request):
         fecha__month=mes
     ).order_by("-fecha")
 
-    ingresos = movimientos_mes.filter(monto__gt=0).aggregate(
+
+    # ------------------------------------------------
+    # INGRESOS DEL MES (solo movimientos acreditados)
+    # ------------------------------------------------
+    ingresos = movimientos_mes.filter(
+        monto__gt=0,
+        estado="ACREDITADO"
+    ).aggregate(
         total=Sum("monto")
     )["total"] or 0
 
-    egresos = movimientos_mes.filter(monto__lt=0).aggregate(
+
+    # ------------------------------------------------
+    # EGRESOS DEL MES (solo movimientos acreditados)
+    # ------------------------------------------------
+    egresos = movimientos_mes.filter(
+        monto__lt=0,
+        estado="ACREDITADO"
+    ).aggregate(
         total=Sum("monto")
     )["total"] or 0
 
-    saldo_actual = ingresos + egresos
+    egresos = abs(egresos)
+
+
+    # ------------------------------------------------
+    # SALDO INICIAL
+    # (saldo final del mes anterior guardado en BD)
+    # ------------------------------------------------
+    mes_anterior = mes - 1
+    anio_anterior = anio
+
+    if mes_anterior == 0:
+        mes_anterior = 12
+        anio_anterior -= 1
+
+    saldo_reg = None
+
+    if cuenta:
+        saldo_reg = SaldoCuentaMensual.objects.filter(
+            cuenta=cuenta,
+            anio=anio_anterior,
+            mes=mes_anterior
+        ).first()
+
+    saldo_inicial = saldo_reg.saldo_final if saldo_reg else 0
+
+
+    # ------------------------------------------------
+    # SALDO ACTUAL
+    # ------------------------------------------------
+    saldo_actual = saldo_inicial + ingresos - egresos
+
 
     mes_nombre = date_format(date(anio, mes, 1), "F")
+
 
     return render(
         request,
@@ -180,7 +226,7 @@ def conciliacion(request):
             "ingresos": ingresos,
             "egresos": egresos,
             "saldo_actual": saldo_actual,
-            "saldo_inicial": 0,
+            "saldo_inicial": saldo_inicial,
         },
     )
 
@@ -195,3 +241,54 @@ def cambiar_estado(request, id):
         movimiento.save()
 
     return redirect(f"/conciliacion?cuenta={movimiento.cuenta.id}")
+
+
+
+@login_required
+def resumen_conciliacion(request):
+    cuenta_id = request.GET.get("cuenta")
+    mes = int(request.GET.get("mes"))
+    anio = int(request.GET.get("anio"))
+
+    movimientos = Movimiento.objects.select_related("cuenta").filter(
+        cuenta_id=cuenta_id,
+        fecha__year=anio,
+        fecha__month=mes
+    )
+
+    # Solo acreditados impactan tarjetas
+    acreditados = movimientos.filter(estado="ACREDITADO")
+
+    ingresos = acreditados.filter(monto__gt=0).aggregate(
+        total=Sum("monto")
+    )["total"] or 0
+
+    egresos = acreditados.filter(monto__lt=0).aggregate(
+        total=Sum("monto")
+    )["total"] or 0
+
+    egresos = abs(egresos)
+
+    # saldo inicial = saldo final del mes anterior
+    mes_anterior = mes - 1
+    anio_anterior = anio
+    if mes_anterior == 0:
+        mes_anterior = 12
+        anio_anterior -= 1
+
+    saldo_reg = SaldoCuentaMensual.objects.filter(
+        cuenta_id=cuenta_id,
+        anio=anio_anterior,
+        mes=mes_anterior
+    ).first()
+
+    saldo_inicial = saldo_reg.saldo_final if saldo_reg else 0
+
+    saldo_actual = saldo_inicial + ingresos - egresos
+
+    return JsonResponse({
+        "saldo_inicial": float(saldo_inicial),
+        "ingresos": float(ingresos),
+        "egresos": float(egresos),
+        "saldo_actual": float(saldo_actual),
+    })
