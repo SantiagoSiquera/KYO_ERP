@@ -27,10 +27,23 @@ def crear_movimiento(request):
     if request.method == "POST":
 
         data = request.POST.copy()
+        
 
-        # normalizar monto movimiento
+        # -------------------------------
+        # NORMALIZAR MONTO Y APLICAR SIGNO
+        # -------------------------------
         if "monto" in data and data["monto"]:
-            data["monto"] = format(normalizar_numero(data["monto"]), ".2f")
+
+            monto_movimiento = normalizar_numero(data["monto"])
+
+            tipo = (data.get("tipo_movimiento") or "").strip().lower()
+
+            if tipo == "egreso":
+                monto_movimiento = -abs(monto_movimiento)
+            else:
+                monto_movimiento = abs(monto_movimiento)
+
+            data["monto"] = format(monto_movimiento, ".2f")
 
         form = MovimientoForm(data)
 
@@ -40,20 +53,7 @@ def crear_movimiento(request):
             proveedores_ids = data.getlist("proveedor[]")
             importes = data.getlist("importe[]")
 
-            # convertir valores monetarios usando utilidades
             monto_movimiento = normalizar_numero(data["monto"])
-
-            # -------------------------------
-            # AQUI SE APLICA EL SIGNO
-            # -------------------------------
-
-            tipo = data.get("tipo_movimiento")
-
-            if tipo == "egreso":
-                monto_movimiento = -abs(monto_movimiento)
-            else:
-                monto_movimiento = abs(monto_movimiento)
-
             total_rubros = sumar(importes)
 
             if not son_iguales(abs(monto_movimiento), total_rubros):
@@ -69,7 +69,6 @@ def crear_movimiento(request):
 
                 movimiento = form.save(commit=False)
                 movimiento.cuenta = cuenta
-                movimiento.monto = monto_movimiento
                 movimiento.save()
 
                 for i in range(len(rubros_ids)):
@@ -112,6 +111,7 @@ def crear_movimiento(request):
             return redirect(f"/movimientos/conciliacion?cuenta={movimiento.cuenta.id}")
 
         else:
+
             print("ERROR FORMULARIO:")
             print(form.errors)
 
