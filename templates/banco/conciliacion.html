@@ -99,7 +99,9 @@ href="?cuenta={{ cuenta.id }}&anio={{ anio }}&mes={{ mes|add:1 }}">▶</a>
 <th onclick="ordenarTabla(0)">Fecha ⇅</th>
 <th onclick="ordenarTabla(1)">Cuenta ⇅</th>
 <th onclick="ordenarTabla(2)">Descripción ⇅</th>
-<th onclick="ordenarTabla(3)">Monto ⇅</th>
+<th onclick="ordenarTabla(3)">Ingreso ⇅</th>
+<th onclick="ordenarTabla(4)">Egreso ⇅</th>
+
 <th>Estado</th>
 <th></th>
 <th>Acciones</th>
@@ -118,8 +120,16 @@ href="?cuenta={{ cuenta.id }}&anio={{ anio }}&mes={{ mes|add:1 }}">▶</a>
 
 <td>{{ m.descripcion }}</td>
 
-<td class="col-monto">
-{{ m.monto|floatformat:2|intcomma }}
+<td class="col-ingreso text-end">
+  {% if m.monto > 0 %}
+    {{ m.monto|floatformat:2|intcomma }}
+  {% endif %}
+</td>
+
+<td class="col-egreso text-end">
+  {% if m.monto < 0 %}
+    {{ m.monto|floatformat:2|intcomma }}
+  {% endif %}
 </td>
 
 <td>

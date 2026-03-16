@@ -366,14 +366,19 @@ const tabla = document.querySelector("#tablaMovimientos tbody")
 if(!tabla) return
 
 const fila = document.createElement("tr")
+const monto = Number(m.monto)
 
 fila.innerHTML = `
 <td>${m.fecha}</td>
 <td>${m.cuenta}</td>
 <td>${m.descripcion}</td>
 
-<td class="col-monto">
-${Number(m.monto).toLocaleString("es-UY",{minimumFractionDigits:2})}
+<td class="col-ingreso text-end">
+  ${monto > 0 ? monto.toLocaleString("es-UY",{minimumFractionDigits:2}) : ""}
+</td>
+
+<td class="col-egreso text-end">
+  ${monto < 0 ? Math.abs(monto).toLocaleString("es-UY",{minimumFractionDigits:2}) : ""}
 </td>
 
 <td>
