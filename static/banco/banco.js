@@ -499,11 +499,17 @@ document.addEventListener("change", function(e){
 });
 
 /* ================================
-Actualiza saldo al cambio de estado
+   Cambiar estado de movimiento
 ================================ */
-function cambiarEstado(select) {
+window.cambiarEstado = function(select) {
+
   const movimientoId = select.dataset.movimientoId;
   const estado = select.value;
+
+  if (!movimientoId) {
+    console.error("No se encontró data-movimiento-id en el select");
+    return;
+  }
 
   fetch(`/movimientos/cambiar-estado/${movimientoId}/`, {
     method: "POST",
@@ -513,87 +519,99 @@ function cambiarEstado(select) {
     },
     body: `estado=${encodeURIComponent(estado)}`
   })
-  .then(r => r.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Error en la respuesta del servidor");
+    }
+    return response.json();
+  })
   .then(data => {
-    if (!data.ok) throw new Error("No se pudo cambiar el estado");
-    return actualizarTarjetas();
+
+    if (!data.ok) {
+      throw new Error("No se pudo cambiar el estado");
+    }
+
+    actualizarTarjetas();
+
   })
   .catch(err => {
-    console.error(err);
+    console.error("Error cambiando estado:", err);
     alert("No se pudo actualizar el estado.");
   });
-}
 
+};
+
+
+/* ================================
+   Actualizar tarjetas resumen
+================================ */
 function actualizarTarjetas() {
+
   const params = new URLSearchParams(window.location.search);
+
   const cuenta = params.get("cuenta");
-  const mes = params.get("mes");
-  const anio = params.get("anio");
+
+  let mes = params.get("mes");
+  let anio = params.get("anio");
+
+  const hoy = new Date();
+
+  if(!mes) mes = hoy.getMonth() + 1;
+  if(!anio) anio = hoy.getFullYear();
 
   fetch(`/movimientos/resumen/?cuenta=${cuenta}&mes=${mes}&anio=${anio}`)
-    .then(r => r.json())
-    .then(data => {
-      const saldoInicial = document.getElementById("saldoInicial");
-      const ingresosMes = document.getElementById("ingresosMes");
-      const egresosMes = document.getElementById("egresosMes");
-      const saldoActual = document.getElementById("saldoActual");
+  .then(r => r.json())
+  .then(data => {
 
-      if (saldoInicial) {
-        saldoInicial.innerText = data.saldo_inicial.toLocaleString("es-UY", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
+    const saldoInicial = document.getElementById("saldoInicial");
+    const ingresosMes = document.getElementById("ingresosMes");
+    const egresosMes = document.getElementById("egresosMes");
+    const saldoActual = document.getElementById("saldoActual");
 
-      if (ingresosMes) {
-        ingresosMes.innerText = data.ingresos.toLocaleString("es-UY", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
+    if (saldoInicial) saldoInicial.innerText =
+      Number(data.saldo_inicial).toLocaleString("es-UY",{minimumFractionDigits:2});
 
-      if (egresosMes) {
-        egresosMes.innerText = data.egresos.toLocaleString("es-UY", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
+    if (ingresosMes) ingresosMes.innerText =
+      Number(data.ingresos).toLocaleString("es-UY",{minimumFractionDigits:2});
 
-      if (saldoActual) {
-        saldoActual.innerText = data.saldo_actual.toLocaleString("es-UY", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
-    })
-    .catch(err => {
-      console.error("Error actualizando tarjetas:", err);
-    });
+    if (egresosMes) egresosMes.innerText =
+      Number(data.egresos).toLocaleString("es-UY",{minimumFractionDigits:2});
+
+    if (saldoActual) saldoActual.innerText =
+      Number(data.saldo_actual).toLocaleString("es-UY",{minimumFractionDigits:2});
+
+  })
+  .catch(err=>{
+    console.error("Error actualizando tarjetas:", err);
+  });
+
 }
 
+
+/* ================================
+   Obtener CSRF token
+================================ */
 function getCookie(name) {
 
-let cookieValue = null;
+  let cookieValue = null;
 
-if (document.cookie && document.cookie !== "") {
+  if (document.cookie && document.cookie !== "") {
 
-const cookies = document.cookie.split(";");
+    const cookies = document.cookie.split(";");
 
-for (let i = 0; i < cookies.length; i++) {
+    for (let i = 0; i < cookies.length; i++) {
 
-const cookie = cookies[i].trim();
+      const cookie = cookies[i].trim();
 
-if (cookie.substring(0, name.length + 1) === (name + "=")) {
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
 
-cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-break;
+    }
 
-}
+  }
 
-}
-
-}
-
-return cookieValue;
+  return cookieValue;
 
 }
