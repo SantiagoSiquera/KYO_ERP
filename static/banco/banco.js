@@ -390,9 +390,13 @@ ${egreso}
 </td>
 
 <td>
-<select class="form-select form-select-sm estado-select">
-<option ${m.estado=="Pendiente"?"selected":""}>Pendiente</option>
-<option ${m.estado=="Acreditado"?"selected":""}>Acreditado</option>
+<select 
+class="form-select form-select-sm estado-select"
+data-movimiento-id="${m.id}"
+onchange="cambiarEstado(this)"
+>
+<option value="PENDIENTE" ${m.estado=="PENDIENTE"?"selected":""}>Pendiente</option>
+<option value="ACREDITADO" ${m.estado=="ACREDITADO"?"selected":""}>Acreditado</option>
 </select>
 </td>
 
@@ -409,6 +413,7 @@ ${egreso}
 tabla.prepend(fila)
 
 }
+
 
 function marcarFila(check){
 
@@ -496,50 +501,99 @@ document.addEventListener("change", function(e){
 /* ================================
 Actualiza saldo al cambio de estado
 ================================ */
+function cambiarEstado(select) {
+  const movimientoId = select.dataset.movimientoId;
+  const estado = select.value;
 
-function cambiarEstado(select){
+  fetch(`/movimientos/cambiar-estado/${movimientoId}/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: `estado=${encodeURIComponent(estado)}`
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.ok) throw new Error("No se pudo cambiar el estado");
+    return actualizarTarjetas();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("No se pudo actualizar el estado.");
+  });
+}
 
-const movimientoId = select.dataset.movimientoId
-const estado = select.value
+function actualizarTarjetas() {
+  const params = new URLSearchParams(window.location.search);
+  const cuenta = params.get("cuenta");
+  const mes = params.get("mes");
+  const anio = params.get("anio");
 
-fetch(`/movimientos/cambiar-estado/${movimientoId}/`,{
-method:"POST",
-headers:{
-"Content-Type":"application/x-www-form-urlencoded",
-"X-CSRFToken":getCookie("csrftoken")
-},
-body:`estado=${estado}`
-})
-.then(()=>{
+  fetch(`/movimientos/resumen/?cuenta=${cuenta}&mes=${mes}&anio=${anio}`)
+    .then(r => r.json())
+    .then(data => {
+      const saldoInicial = document.getElementById("saldoInicial");
+      const ingresosMes = document.getElementById("ingresosMes");
+      const egresosMes = document.getElementById("egresosMes");
+      const saldoActual = document.getElementById("saldoActual");
 
-actualizarTarjetas()
+      if (saldoInicial) {
+        saldoInicial.innerText = data.saldo_inicial.toLocaleString("es-UY", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
 
-})
+      if (ingresosMes) {
+        ingresosMes.innerText = data.ingresos.toLocaleString("es-UY", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+
+      if (egresosMes) {
+        egresosMes.innerText = data.egresos.toLocaleString("es-UY", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+
+      if (saldoActual) {
+        saldoActual.innerText = data.saldo_actual.toLocaleString("es-UY", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+    })
+    .catch(err => {
+      console.error("Error actualizando tarjetas:", err);
+    });
+}
+
+function getCookie(name) {
+
+let cookieValue = null;
+
+if (document.cookie && document.cookie !== "") {
+
+const cookies = document.cookie.split(";");
+
+for (let i = 0; i < cookies.length; i++) {
+
+const cookie = cookies[i].trim();
+
+if (cookie.substring(0, name.length + 1) === (name + "=")) {
+
+cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+break;
 
 }
 
-function actualizarTarjetas(){
+}
 
-const cuenta = new URLSearchParams(window.location.search).get("cuenta")
-const mes = new URLSearchParams(window.location.search).get("mes")
-const anio = new URLSearchParams(window.location.search).get("anio")
+}
 
-fetch(`/movimientos/resumen/?cuenta=${cuenta}&mes=${mes}&anio=${anio}`)
-.then(r => r.json())
-.then(data => {
-
-document.getElementById("saldoInicial").innerText =
-data.saldo_inicial.toLocaleString("es-UY",{minimumFractionDigits:2})
-
-document.getElementById("ingresosMes").innerText =
-data.ingresos.toLocaleString("es-UY",{minimumFractionDigits:2})
-
-document.getElementById("egresosMes").innerText =
-data.egresos.toLocaleString("es-UY",{minimumFractionDigits:2})
-
-document.getElementById("saldoActual").innerText =
-data.saldo_actual.toLocaleString("es-UY",{minimumFractionDigits:2})
-
-})
+return cookieValue;
 
 }

@@ -230,19 +230,17 @@ def conciliacion(request):
         },
     )
 
-
 @login_required
 def cambiar_estado(request, id):
-
     movimiento = get_object_or_404(Movimiento, id=id)
 
     if request.method == "POST":
-        movimiento.estado = request.POST["estado"]
+        movimiento.estado = request.POST.get("estado")
         movimiento.save()
 
-    return redirect(f"/conciliacion?cuenta={movimiento.cuenta.id}")
+    return JsonResponse({"ok": True})
 
-
+from finanzas.models import SaldoCuentaMensual
 
 @login_required
 def resumen_conciliacion(request):
@@ -253,10 +251,9 @@ def resumen_conciliacion(request):
     movimientos = Movimiento.objects.select_related("cuenta").filter(
         cuenta_id=cuenta_id,
         fecha__year=anio,
-        fecha__month=mes
+        fecha__month=mes,
     )
 
-    # Solo acreditados impactan tarjetas
     acreditados = movimientos.filter(estado="ACREDITADO")
 
     ingresos = acreditados.filter(monto__gt=0).aggregate(
@@ -266,10 +263,8 @@ def resumen_conciliacion(request):
     egresos = acreditados.filter(monto__lt=0).aggregate(
         total=Sum("monto")
     )["total"] or 0
-
     egresos = abs(egresos)
 
-    # saldo inicial = saldo final del mes anterior
     mes_anterior = mes - 1
     anio_anterior = anio
     if mes_anterior == 0:
@@ -279,11 +274,10 @@ def resumen_conciliacion(request):
     saldo_reg = SaldoCuentaMensual.objects.filter(
         cuenta_id=cuenta_id,
         anio=anio_anterior,
-        mes=mes_anterior
+        mes=mes_anterior,
     ).first()
 
     saldo_inicial = saldo_reg.saldo_final if saldo_reg else 0
-
     saldo_actual = saldo_inicial + ingresos - egresos
 
     return JsonResponse({
