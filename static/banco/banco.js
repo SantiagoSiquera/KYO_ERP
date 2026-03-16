@@ -362,23 +362,31 @@ INSERTAR MOVIMIENTO EN TABLA
 function insertarMovimientoTabla(m){
 
 const tabla = document.querySelector("#tablaMovimientos tbody")
-
 if(!tabla) return
 
-const fila = document.createElement("tr")
 const monto = Number(m.monto)
+
+const ingreso = monto > 0
+  ? monto.toLocaleString("es-UY",{minimumFractionDigits:2})
+  : ""
+
+const egreso = monto < 0
+  ? Math.abs(monto).toLocaleString("es-UY",{minimumFractionDigits:2})
+  : ""
+
+const fila = document.createElement("tr")
 
 fila.innerHTML = `
 <td>${m.fecha}</td>
 <td>${m.cuenta}</td>
 <td>${m.descripcion}</td>
 
-<td class="col-ingreso text-end">
-  ${monto > 0 ? monto.toLocaleString("es-UY",{minimumFractionDigits:2}) : ""}
+<td class="text-end text-success">
+${ingreso}
 </td>
 
-<td class="col-egreso text-end">
-  ${monto < 0 ? Math.abs(monto).toLocaleString("es-UY",{minimumFractionDigits:2}) : ""}
+<td class="text-end text-danger">
+${egreso}
 </td>
 
 <td>
@@ -388,26 +396,19 @@ fila.innerHTML = `
 </select>
 </td>
 
-<td>
-<input
-type="checkbox"
-class="check-mov"
-onclick="marcarFila(this)"
->
+<td class="text-center">
+<input type="checkbox" class="check-mov" onclick="marcarFila(this)">
 </td>
 
 <td>
-<div class="acciones-box">
-<button class="btn-editar">Editar</button>
-<button class="btn-eliminar">Eliminar</button>
-</div>
+<button class="btn btn-sm btn-outline-primary">Editar</button>
+<button class="btn btn-sm btn-outline-danger">Eliminar</button>
 </td>
 `
 
 tabla.prepend(fila)
 
 }
-
 
 function marcarFila(check){
 

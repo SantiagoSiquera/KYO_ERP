@@ -30,7 +30,7 @@ def crear_movimiento(request):
 
         # normalizar monto movimiento
         if "monto" in data and data["monto"]:
-         data["monto"] = format(normalizar_numero(data["monto"]), ".2f")
+            data["monto"] = format(normalizar_numero(data["monto"]), ".2f")
 
         form = MovimientoForm(data)
 
@@ -42,9 +42,21 @@ def crear_movimiento(request):
 
             # convertir valores monetarios usando utilidades
             monto_movimiento = normalizar_numero(data["monto"])
+
+            # -------------------------------
+            # AQUI SE APLICA EL SIGNO
+            # -------------------------------
+
+            tipo = data.get("tipo_movimiento")
+
+            if tipo == "EGRESO":
+                monto_movimiento = -abs(monto_movimiento)
+            else:
+                monto_movimiento = abs(monto_movimiento)
+
             total_rubros = sumar(importes)
 
-            if not son_iguales(monto_movimiento, total_rubros):
+            if not son_iguales(abs(monto_movimiento), total_rubros):
 
                 return JsonResponse({
                     "ok": False,
@@ -57,6 +69,7 @@ def crear_movimiento(request):
 
                 movimiento = form.save(commit=False)
                 movimiento.cuenta = cuenta
+                movimiento.monto = monto_movimiento
                 movimiento.save()
 
                 for i in range(len(rubros_ids)):
@@ -121,7 +134,6 @@ def crear_movimiento(request):
             "proveedores": proveedores,
         },
     )
-
 
 @login_required
 def conciliacion(request):
