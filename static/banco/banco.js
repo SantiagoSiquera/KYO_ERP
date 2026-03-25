@@ -208,7 +208,10 @@ document.addEventListener("submit", function(e){
 
 const form = e.target
 
-if(!form.action.includes("/movimientos/nuevo/")) return
+if(
+  !form.action.includes("/movimientos/nuevo/") &&
+  !form.action.includes("/editar/")
+) return
 
 const montoInput = document.getElementById("montoMovimiento")
 
@@ -254,7 +257,10 @@ document.addEventListener("submit", function(e){
 
 const form = e.target
 
-if(!form.action.includes("/movimientos/nuevo/")) return
+if(
+  !form.action.includes("/movimientos/nuevo/") &&
+  !form.action.includes("/editar/")
+) return
 
 e.preventDefault()
 
@@ -614,4 +620,99 @@ function getCookie(name) {
 
   return cookieValue;
 
+}
+
+
+window.eliminarMovimiento = function(btn){
+
+const movimientoId = btn.dataset.movimientoId
+
+if(!movimientoId){
+console.error("No se encontró data-movimiento-id")
+return
+}
+
+if(!confirm("¿Eliminar movimiento?")) return
+
+fetch(`/movimientos/${movimientoId}/eliminar/`,{
+method:"POST",
+headers:{
+"X-CSRFToken":getCookie("csrftoken"),
+"X-Requested-With":"XMLHttpRequest"
+}
+})
+.then(r=>r.json())
+.then(res=>{
+
+if(!res.ok){
+alert("No se pudo eliminar")
+return
+}
+
+const fila = btn.closest("tr")
+if(fila) fila.remove()
+
+actualizarTarjetas()
+
+})
+
+}
+
+
+window.editarMovimiento = function(btn){
+
+const movimientoId = btn.dataset.movimientoId
+
+if(!movimientoId){
+console.error("No se encontró data-movimiento-id")
+return
+}
+
+fetch(`/movimientos/${movimientoId}/editar/`)
+.then(res => res.text())
+.then(html => {
+
+const contenedor = document.getElementById("contenidoModalMovimiento")
+
+if(!contenedor) return
+
+contenedor.innerHTML = html
+
+const modalElement = document.getElementById("modalMovimiento")
+const modal = new bootstrap.Modal(modalElement)
+
+modal.show()
+
+setTimeout(function(){
+
+aplicarColorTipo()
+
+// recalcular rubros existentes
+calcularRubros()
+
+// activar cálculo al modificar importes
+document.querySelectorAll(".rubro-importe").forEach(inp=>{
+inp.addEventListener("input", calcularRubros)
+})
+
+// validar proveedor según rubro
+document.querySelectorAll(".rubro-select").forEach(sel=>{
+sel.addEventListener("change", function(){
+
+const option = sel.selectedOptions[0]
+const proveedor = sel.closest("tr").querySelector(".proveedor-select")
+
+if(option && option.dataset.nombre && option.dataset.nombre.includes("proveedor")){
+proveedor.disabled = false
+}else{
+proveedor.disabled = true
+proveedor.value = ""
+}
+
+})
+})
+
+},100)
+
+})
 }

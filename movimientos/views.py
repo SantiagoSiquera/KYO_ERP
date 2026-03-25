@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from django.http import JsonResponse
 from finanzas.models import SaldoCuentaMensual
 from utils.dinero import normalizar_numero, sumar, son_iguales
+from decimal import Decimal
 
 
 @login_required
@@ -286,3 +287,98 @@ def resumen_conciliacion(request):
         "egresos": float(egresos),
         "saldo_actual": float(saldo_actual),
     })
+
+@login_required
+def eliminar_movimiento(request, id):
+
+    if request.method != "POST":
+        return JsonResponse({"ok": False})
+
+    try:
+        mov = Movimiento.objects.get(id=id)
+        mov.delete()  # CASCADE elimina rubros
+        return JsonResponse({"ok": True})
+    except Movimiento.DoesNotExist:
+        return JsonResponse({"ok": False})
+    
+
+@login_required
+def editar_movimiento(request, id):
+
+    mov = get_object_or_404(Movimiento, id=id)
+
+    rubros = Rubro.objects.all().order_by("nombre")
+    proveedores = Proveedor.objects.all().order_by("nombre")
+
+    rubros_mov = MovimientoRubro.objects.filter(movimiento=mov)
+
+    if request.method == "POST":
+
+        form = MovimientoForm(request.POST, instance=mov)
+
+        if form.is_valid():
+
+            try:
+
+                with transaction.atomic():
+
+                    movimiento = form.save()
+
+                    # borrar rubros anteriores
+                    MovimientoRubro.objects.filter(
+                        movimiento=movimiento
+                    ).delete()
+
+                    rubro_ids = request.POST.getlist("rubro[]")
+                    proveedor_ids = request.POST.getlist("proveedor[]")
+                    importes = request.POST.getlist("importe[]")
+
+                    for r, p, i in zip(rubro_ids, proveedor_ids, importes):
+
+                        # ignorar filas vacías
+                        if not r or not i:
+                            continue
+
+                        importe = Decimal(i.replace(",", "."))
+
+                        MovimientoRubro.objects.create(
+                            movimiento=movimiento,
+                            rubro_id=r,
+                            proveedor_id=p if p else None,
+                            importe=importe
+                        )
+
+                return JsonResponse({
+                                     "ok": True,
+                                     "movimiento": {
+                                     "id": movimiento.id,
+                                     "fecha": movimiento.fecha.strftime("%d/%m/%Y"),
+                                     "cuenta": movimiento.cuenta.nombre,
+                                     "descripcion": movimiento.descripcion,
+                                     "monto": float(movimiento.monto),
+                                     "estado": movimiento.estado,
+                                     }
+                                    })
+
+            except Exception as e:
+
+                return JsonResponse({
+                    "ok": False,
+                    "error": str(e)
+                }, status=400)
+
+    else:
+
+        form = MovimientoForm(instance=mov)
+
+    return render(
+        request,
+        "movimientos/form_movimiento_modal.html",
+        {
+            "form": form,
+            "movimiento": mov,
+            "rubros": rubros,
+            "proveedores": proveedores,
+            "rubros_mov": rubros_mov,
+        },
+    )

@@ -167,8 +167,21 @@ onclick="marcarFila(this)"
 <td>
 
 <div class="acciones-box">
-<button class="btn-editar">Editar</button>
-<button class="btn-eliminar">Eliminar</button>
+<button
+      type="button"
+      class="btn btn-sm btn-outline-primary btn-editar"
+      data-movimiento-id="{{ m.id }}"
+      onclick="editarMovimiento(this)">
+      Editar
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-danger btn-eliminar"
+      data-movimiento-id="{{ m.id }}"
+      onclick="eliminarMovimiento(this)">
+      Eliminar
+    </button>
 </div>
 
 </td>

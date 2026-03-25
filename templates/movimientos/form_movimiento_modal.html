@@ -1,9 +1,24 @@
 <div class="modal-header">
-<h5 class="modal-title">Nuevo movimiento</h5>
+
+<h5 class="modal-title">
+{% if movimiento %}
+Editar movimiento
+{% else %}
+Nuevo movimiento
+{% endif %}
+</h5>
+
 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
-<form method="post" action="/movimientos/nuevo/">
+<form method="post"
+{% if movimiento %}
+action="/movimientos/{{ movimiento.id }}/editar/"
+{% else %}
+action="/movimientos/nuevo/"
+{% endif %}
+>
+
 {% csrf_token %}
 
 <input type="hidden" name="cuenta" value="{{ cuenta.id }}">
@@ -22,8 +37,17 @@
 <label class="form-label">Tipo</label>
 
 <select name="tipo_movimiento" id="tipoMovimiento" class="form-select">
-<option value="INGRESO">Ingreso</option>
-<option value="EGRESO">Egreso</option>
+
+<option value="INGRESO"
+{% if movimiento and movimiento.monto > 0 %}selected{% endif %}>
+Ingreso
+</option>
+
+<option value="EGRESO"
+{% if movimiento and movimiento.monto < 0 %}selected{% endif %}>
+Egreso
+</option>
+
 </select>
 
 </div>
@@ -79,9 +103,70 @@ onclick="agregarRubro()">
 <tbody
 id="rubrosBody"
 data-rubros-options="{% for r in rubros %}<option value='{{ r.id }}' data-nombre='{{ r.nombre|lower }}'>{{ r.nombre }}</option>{% endfor %}"
-data-proveedores-options="{% for p in proveedores %}<option value='{{ p.id }}'>{{ p.nombre }}</option>{% endfor %}">
-</tbody>
+data-proveedores-options="{% for p in proveedores %}<option value='{{ p.id }}'>{{ p.nombre }}</option>{% endfor %}"
+>
+{% if rubros_mov %}
+{% for r in rubros_mov %}
 
+<tr>
+
+<td>
+<select name="rubro[]" class="form-select rubro-select">
+
+<option value="">Seleccione rubro</option>
+
+{% for rub in rubros %}
+<option value="{{ rub.id }}"
+{% if rub.id == r.rubro_id %}selected{% endif %}
+>
+{{ rub.nombre }}
+</option>
+{% endfor %}
+
+</select>
+</td>
+
+<td>
+<select name="proveedor[]" class="form-select proveedor-select">
+    {% if not r.proveedor_id %}disabled{% endif %}>
+
+<option value="">Proveedor</option>
+
+{% for p in proveedores %}
+<option value="{{ p.id }}"
+{% if p.id == r.proveedor_id %}selected{% endif %}
+>
+{{ p.nombre }}
+</option>
+{% endfor %}
+
+</select>
+</td>
+
+<td>
+<input
+type="text"
+name="importe[]"
+class="form-control"
+value="{{ r.monto|floatformat:2 }}"
+>
+</td>
+
+<td>
+<button
+type="button"
+class="btn btn-sm btn-danger"
+onclick="this.closest('tr').remove(); calcularRubros()">
+✕
+</button>
+</td>
+
+</tr>
+
+{% endfor %}
+{% endif %}
+
+</body>
 </table>
 
 <div class="text-end mt-2">
